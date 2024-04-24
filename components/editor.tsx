@@ -9,7 +9,6 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { useState } from 'react'
 import {
-  codeOutputSchema,
   codeOutputSchemaResponseSchema,
   isValidCodeResponseSchema
 } from '@/lib/api-schema'
@@ -27,9 +26,7 @@ const FormSchema = z.object({
 
 export const Editor = () => {
   const [isValidating, setIsValidating] = useState(false)
-  const [codeOutput, setCodeOutput] = useState<z.infer<
-    typeof codeOutputSchema
-  > | null>(null)
+  const [codeOutput, setCodeOutput] = useState<string | null>(null)
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema)
@@ -37,9 +34,7 @@ export const Editor = () => {
 
   const { setError, clearErrors } = form
 
-  const onSubmit = async (data: z.infer<typeof FormSchema>) => {
-    setIsValidating(true)
-    setCodeOutput(null)
+  const validateCode = async (data: z.infer<typeof FormSchema>) => {
     const codeValidationResponse = await fetch('/api/validate-code', {
       method: 'POST',
       headers: {
@@ -55,60 +50,91 @@ export const Editor = () => {
         isValidCodeResponseSchema.parse(codeValidationJson)
 
       if ('error' in codeValidationResult) {
-        setError('code', {
-          type: 'manual',
-          message: codeValidationResult.error
-        })
-        setIsValidating(false)
-        return
-      }
-
-      if (!codeValidationResult.isValidCode) {
-        setError('code', {
-          type: 'manual',
-          message: 'COMPILER THINKS THAT IS NOT A VALID PROGRAM'
-        })
-        setIsValidating(false)
-        return
-      }
-
-      const codeExecutingResponse = await fetch('/api/execute-code', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(data)
-      })
-
-      const codeExecutingJson = await codeExecutingResponse.json()
-
-      try {
-        const codeExecutionResult =
-          codeOutputSchemaResponseSchema.parse(codeExecutingJson)
-
-        if ('error' in codeExecutionResult) {
-          setError('code', {
-            type: 'manual',
-            message: codeExecutionResult.error
-          })
-          setIsValidating(false)
-          return
+        return {
+          isValidCode: false,
+          error: codeValidationResult.error
         }
+      }
+      if (!codeValidationResult.isValidCode) {
+        return {
+          isValidCode: false,
+          error: 'COMPILER THINKS THAT IS NOT A VALID PROGRAM'
+        }
+      }
 
-        clearErrors('code')
-        setIsValidating(false)
-        console.log('Code output:', codeExecutionResult)
-        setCodeOutput(codeExecutionResult)
-      } catch (error) {
-        console.error(error)
-        setError('code', { type: 'manual', message: JSON.stringify(error) })
-        setIsValidating(false)
+      return {
+        isValidCode: codeValidationResult.isValidCode
       }
     } catch (error) {
       console.error(error)
-      setError('code', { type: 'manual', message: JSON.stringify(error) })
-      setIsValidating(false)
+      return {
+        isValidCode: false,
+        error: JSON.stringify(error)
+      }
     }
+  }
+
+  const executeCode = async (data: z.infer<typeof FormSchema>) => {
+    const codeExecutingResponse = await fetch('/api/execute-code', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data)
+    })
+
+    const codeExecutingJson = await codeExecutingResponse.json()
+
+    try {
+      const codeExecutionResult =
+        codeOutputSchemaResponseSchema.parse(codeExecutingJson)
+
+      if ('error' in codeExecutionResult) {
+        return {
+          error: codeExecutionResult.error
+        }
+      }
+
+      return {
+        codeOutput: codeExecutionResult.output
+      }
+    } catch (error) {
+      console.error(error)
+      return {
+        error: JSON.stringify(error)
+      }
+    }
+  }
+
+  const onSubmit = async (data: z.infer<typeof FormSchema>) => {
+    setIsValidating(true)
+    setCodeOutput(null)
+
+    const codeValidationResult = await validateCode(data)
+
+    if ('error' in codeValidationResult || !codeValidationResult.isValidCode) {
+      setError('code', {
+        type: 'manual',
+        message: codeValidationResult.error
+      })
+      setIsValidating(false)
+      return
+    }
+
+    const codeExecutionResult = await executeCode(data)
+
+    if ('error' in codeExecutionResult) {
+      setError('code', {
+        type: 'manual',
+        message: codeExecutionResult.error
+      })
+      setIsValidating(false)
+      return
+    }
+
+    clearErrors('code')
+    setCodeOutput(codeExecutionResult.codeOutput)
+    setIsValidating(false)
   }
 
   return (
@@ -158,7 +184,7 @@ export const Editor = () => {
       {codeOutput && (
         <div className={cn('mt-4')}>
           <h1>OUTPUT:</h1>
-          <pre>{codeOutput.output}</pre>
+          <pre>{codeOutput}</pre>
         </div>
       )}
     </>
