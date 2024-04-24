@@ -24,7 +24,7 @@ yarn
 
 ### Setting up Environment Variables
 
-Create a `.env` file at the root of your project and add your OpenAI API key:
+For local development, create a `.env.local` file at the root of your project and add your OpenAI API key:
 
 ```env
 OPEN_AI_API_KEY=sk-1234abcd5678efgh91011ijk
@@ -32,9 +32,13 @@ OPEN_AI_API_KEY=sk-1234abcd5678efgh91011ijk
 
 ### Available Scripts
 
-In the project directory, you can run:
+In the project directory, the following commands are available:
 
+**Local Development**:
 - `yarn dev`: Runs the app in development mode.
+
+**Production**:
+- Ensure environment variables are properly set in your production environment.
 - `yarn build`: Builds the app for production.
 - `yarn start`: Runs the built app in production mode.
 
