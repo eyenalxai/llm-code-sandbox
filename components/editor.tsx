@@ -101,6 +101,7 @@ export const Editor = () => {
               <FormItem>
                 <FormControl>
                   <Textarea
+                    spellCheck={false}
                     placeholder="YOUR CODE"
                     className={cn('min-h-[256px]')}
                     {...field}
