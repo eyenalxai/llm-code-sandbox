@@ -28,10 +28,9 @@ export async function POST(req: Request) {
       {
         role: 'system',
         content: `You are now a code executor. \\
-                  Your task is to predict the output of the provided code, including all errors and exceptions. \\
-                  Respond with the output in JSON format using the following schema: \\
-                  {"output": "your_output_here"} \\
-                  `
+                  Execute the provided code in a simulated environment and predict its exact output. \\
+                  Respond with the predicted output in JSON format using the following schema: \\
+                  {"output": "your_output_here"}`
       },
       {
         role: 'user',

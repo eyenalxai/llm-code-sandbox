@@ -113,13 +113,13 @@ export const Editor = () => {
       </Form>
       {isValidating && (
         <div className={cn('mt-4')}>
-          <h1>...</h1>
+          <p className={cn('text-3xl')}>...</p>
         </div>
       )}
       {codeOutput && (
         <div className={cn('mt-4')}>
-          <h1>OUTPUT:</h1>
-          <pre>{codeOutput}</pre>
+          <p className={cn('text-xl')}>OUTPUT:</p>
+          <p>{codeOutput}</p>
         </div>
       )}
     </>
