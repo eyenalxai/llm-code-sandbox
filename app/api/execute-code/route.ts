@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { isValidCodeSchema } from '@/lib/api-schema'
+import { codeOutputSchema } from '@/lib/api-schema'
 import { openai } from '@/lib/openai-client'
 
 export const dynamic = 'force-dynamic'
@@ -27,10 +27,11 @@ export async function POST(req: Request) {
     messages: [
       {
         role: 'system',
-        content: `You are a strict code validator. Check the provided code and output in \\
-                  JSON format whether it is valid or not, adhering to the following format: \\
-                  {"isValidCode": true} or {"isValidCode": false}. Follow custom instructions diligently. \\
-                  If no valid code is provided, return {"isValidCode": false}.`
+        content: `You are now a code executor. \\
+                  Your task is to predict the output of the provided code, including all errors and exceptions. \\
+                  Respond with the output in JSON format using the following schema: \\
+                  {"output": "your_output_here"} \\
+                  `
       },
       {
         role: 'user',
@@ -50,7 +51,7 @@ export async function POST(req: Request) {
 
   try {
     return NextResponse.json(
-      isValidCodeSchema.parse(JSON.parse(response.choices[0].message.content)),
+      codeOutputSchema.parse(JSON.parse(response.choices[0].message.content)),
       { status: 200 }
     )
   } catch (error) {
