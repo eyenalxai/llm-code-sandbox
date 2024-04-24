@@ -6,8 +6,9 @@ import { Providers } from '@/components/providers'
 import { Viewport } from 'next'
 
 export const metadata = {
-  title: 'CODE SANDBOX',
-  description: 'Write, compile, and run code in the browser'
+  title: 'LLM CODE SANDBOX',
+  description:
+    'Write, compile, and run code in the browser without any runtimes or compilers. Fake languages also supported.'
 }
 
 export const viewport: Viewport = {
