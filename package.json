@@ -9,19 +9,23 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@t3-oss/env-nextjs": "0.8.0",
+    "ai": "^3.0.29",
     "button": "^1.1.1",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "lucide-react": "^0.372.0",
     "next": "14.2.2",
     "next-themes": "^0.3.0",
+    "openai": "^4.38.3",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-resizable-panels": "^2.0.18",
     "resizable": "^1.2.1",
     "tailwind-merge": "^2.3.0",
     "tailwindcss-animate": "^1.0.7",
-    "textarea": "^0.3.0"
+    "textarea": "^0.3.0",
+    "zod": "^3.23.4"
   },
   "devDependencies": {
     "@types/node": "20.12.7",
