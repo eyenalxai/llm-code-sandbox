@@ -6,23 +6,13 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Form, FormControl, FormField, FormItem } from '@/components/ui/form'
 import { Button } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
+import { cn, fetchAndValidate } from '@/lib/utils'
 import { useState } from 'react'
 import {
-  codeOutputSchemaResponseSchema,
-  isValidCodeResponseSchema
-} from '@/lib/api-schema'
-
-const FormSchema = z.object({
-  code: z
-    .string()
-    .min(8, {
-      message: 'CODE MUST BE AT LEAST 8 CHARACTERS'
-    })
-    .max(4096, {
-      message: 'CODE MUST BE LESS THAN 4096 CHARACTERS'
-    })
-})
+  CodeOutputSchemaResponseSchema,
+  FormSchema,
+  IsValidCodeResponseSchema
+} from '@/lib/schema'
 
 export const Editor = () => {
   const [isValidating, setIsValidating] = useState(false)
@@ -34,85 +24,17 @@ export const Editor = () => {
 
   const { setError, clearErrors } = form
 
-  const validateCode = async (data: z.infer<typeof FormSchema>) => {
-    const codeValidationResponse = await fetch('/api/validate-code', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(data)
-    })
-
-    const codeValidationJson = await codeValidationResponse.json()
-
-    try {
-      const codeValidationResult =
-        isValidCodeResponseSchema.parse(codeValidationJson)
-
-      if ('error' in codeValidationResult) {
-        return {
-          isValidCode: false,
-          error: codeValidationResult.error
-        }
-      }
-      if (!codeValidationResult.isValidCode) {
-        return {
-          isValidCode: false,
-          error: 'COMPILER THINKS THAT IS NOT A VALID PROGRAM'
-        }
-      }
-
-      return {
-        isValidCode: codeValidationResult.isValidCode
-      }
-    } catch (error) {
-      console.error(error)
-      return {
-        isValidCode: false,
-        error: JSON.stringify(error)
-      }
-    }
-  }
-
-  const executeCode = async (data: z.infer<typeof FormSchema>) => {
-    const codeExecutingResponse = await fetch('/api/execute-code', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(data)
-    })
-
-    const codeExecutingJson = await codeExecutingResponse.json()
-
-    try {
-      const codeExecutionResult =
-        codeOutputSchemaResponseSchema.parse(codeExecutingJson)
-
-      if ('error' in codeExecutionResult) {
-        return {
-          error: codeExecutionResult.error
-        }
-      }
-
-      return {
-        codeOutput: codeExecutionResult.output
-      }
-    } catch (error) {
-      console.error(error)
-      return {
-        error: JSON.stringify(error)
-      }
-    }
-  }
-
   const onSubmit = async (data: z.infer<typeof FormSchema>) => {
     setIsValidating(true)
     setCodeOutput(null)
 
-    const codeValidationResult = await validateCode(data)
+    const codeValidationResult = await fetchAndValidate(
+      '/api/validate-code',
+      data,
+      IsValidCodeResponseSchema
+    )
 
-    if ('error' in codeValidationResult || !codeValidationResult.isValidCode) {
+    if ('error' in codeValidationResult) {
       setError('code', {
         type: 'manual',
         message: codeValidationResult.error
@@ -121,7 +43,20 @@ export const Editor = () => {
       return
     }
 
-    const codeExecutionResult = await executeCode(data)
+    if (!codeValidationResult.isValidCode) {
+      setError('code', {
+        type: 'manual',
+        message: 'COMPILER THINKS YOUR CODE IS NOT A VALID PROGRAM'
+      })
+      setIsValidating(false)
+      return
+    }
+
+    const codeExecutionResult = await fetchAndValidate(
+      '/api/execute-code',
+      data,
+      CodeOutputSchemaResponseSchema
+    )
 
     if ('error' in codeExecutionResult) {
       setError('code', {
@@ -133,7 +68,7 @@ export const Editor = () => {
     }
 
     clearErrors('code')
-    setCodeOutput(codeExecutionResult.codeOutput)
+    setCodeOutput(codeExecutionResult.output) // Assuming 'output' exists in the execution result schema
     setIsValidating(false)
   }
 

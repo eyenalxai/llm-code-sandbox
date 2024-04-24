@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { codeOutputSchema } from '@/lib/api-schema'
+import { CodeOutputSchema } from '@/lib/schema'
 import { openai } from '@/lib/openai-client'
 
 export const dynamic = 'force-dynamic'
@@ -8,7 +8,7 @@ export async function POST(req: Request) {
   const { code }: { code: string | undefined } = await req.json()
 
   if (!code) {
-    return new Response('Missing required field code', { status: 400 })
+    return new Response('MISSING_REQUIRED_FIELD_CODE', { status: 400 })
   }
 
   if (code.length > 4096) {
@@ -51,7 +51,7 @@ export async function POST(req: Request) {
 
   try {
     return NextResponse.json(
-      codeOutputSchema.parse(JSON.parse(response.choices[0].message.content)),
+      CodeOutputSchema.parse(JSON.parse(response.choices[0].message.content)),
       { status: 200 }
     )
   } catch (error) {
